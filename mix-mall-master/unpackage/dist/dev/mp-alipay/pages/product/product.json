@@ -1,0 +1,6 @@
+{
+  "defaultTitle": "详情展示",
+  "usingComponents": {
+    "share": "/components/share"
+  }
+}
