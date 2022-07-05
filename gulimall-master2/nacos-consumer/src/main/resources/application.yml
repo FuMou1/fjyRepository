@@ -1,0 +1,18 @@
+
+server:
+  port: 8071
+
+spring:
+  application:
+    name: nacos-consumer
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+user:
+  name: 250000
