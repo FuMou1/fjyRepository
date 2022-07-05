@@ -159,10 +159,17 @@
 				let list = this.cartList;
 				let row = list[index];
 				let id = row.id;
+				uni.showModal({
+					content: '将'+row.title+'移除购物车？',
+					success: (e)=>{
+						if(e.confirm){
+							this.cartList.splice(index, 1);
+							this.calcTotal();
+							uni.hideLoading();
+						}
+					}
+				})
 
-				this.cartList.splice(index, 1);
-				this.calcTotal();
-				uni.hideLoading();
 			},
 			//清空
 			clearCart(){

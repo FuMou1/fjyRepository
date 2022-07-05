@@ -1,15 +1,15 @@
 <template>
 	<view>
 		<!-- 地址 -->
-		<navigator url="/pages/address/address?source=1" class="address-section">
+		<navigator url="/pages/address/address?userId=3028" class="address-section">
 			<view class="order-content">
 				<text class="yticon icon-shouhuodizhi"></text>
 				<view class="cen">
 					<view class="top">
 						<text class="name">{{addressData.name}}</text>
-						<text class="mobile">{{addressData.mobile}}</text>
+						<text class="mobile">{{addressData.phone}}</text>
 					</view>
-					<text class="address">{{addressData.address}} {{addressData.area}}</text>
+					<text class="address">{{addressData.province}} {{addressData.city}} {{addressData.county}} {{addressData.town}} {{addressData.address}}</text>
 				</view>
 				<text class="yticon icon-you"></text>
 			</view>
@@ -145,16 +145,42 @@
 					}
 				],
 				addressData: {
-					name: '许小星',
-					mobile: '13853989563',
-					addressName: '金九大道',
-					address: '山东省济南市历城区',
-					area: '149号',
+					name: '傅家义',
+					mobile: '15512341234',
+					addressName: '吴淞街道',
+					address: '上海市宝山区城区',
+					area: '199号',
 					default: false,
 				}
 			}
 		},
 		onLoad(option){
+			let params = {
+			      "userId":3028,//用户id
+				  "isDefault":"1",
+				"limit":10,
+				"page":1
+			}
+						
+			uni.request({
+						
+			      url: `${this.$baseUrl}/app/api/deliveryaddress/listByPage`,
+						
+			      method: 'POST',
+						
+			      data: params,
+						
+			      success: (res)=>{console.log("成功");console.log(res);
+					var defaultAddress = res.data.data.records;
+					if(defaultAddress.length>0){
+						this.addressData = defaultAddress[0];
+					}
+					
+				 },
+						
+			      fail: (err)=>{console.log("失败");console.log(res)}
+						
+			})  
 			//商品数据
 			//let data = JSON.parse(option.data);
 			//console.log(data);

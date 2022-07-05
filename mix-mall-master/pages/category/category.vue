@@ -1,16 +1,16 @@
 <template>
 	<view class="content">
 		<scroll-view scroll-y class="left-aside">
-			<view v-for="item in flist" :key="item.id" class="f-item b-b" :class="{active: item.id === currentId}" @click="tabtap(item)">
+			<view v-for="item in categoryList" :key="item.catId" class="f-item b-b" :class="{active: item.catId === currentId}" @click="tabtap(item)">
 				{{item.name}}
 			</view>
 		</scroll-view>
 		<scroll-view scroll-with-animation scroll-y class="right-aside" @scroll="asideScroll" :scroll-top="tabScrollTop">
-			<view v-for="item in slist" :key="item.id" class="s-list" :id="'main-'+item.id">
+			<view v-for="item in slist" :key="item.catId" class="s-list" :id="'main-'+item.catId">
 				<text class="s-item">{{item.name}}</text>
 				<view class="t-list">
-					<view @click="navToList(item.id, titem.id)" v-if="titem.pid === item.id" class="t-item" v-for="titem in tlist" :key="titem.id">
-						<image :src="titem.picture"></image>
+					<view @click="navToList(item.catId, titem.catId)" v-if="titem.parentCid === item.catId" class="t-item" v-for="titem in tlist" :key="titem.catId">
+						<image :src="titem.icon"></image>
 						<text>{{titem.name}}</text>
 					</view>
 				</view>
@@ -26,6 +26,7 @@
 				sizeCalcState: false,
 				tabScrollTop: 0,
 				currentId: 1,
+				categoryList:[],
 				flist: [],
 				slist: [],
 				tlist: [],
@@ -36,26 +37,71 @@
 		},
 		methods: {
 			async loadData(){
-				let list = await this.$api.json('cateList');
-				list.forEach(item=>{
-					if(!item.pid){
-						this.flist.push(item);  //pid为父级id, 没有pid或者pid=0是一级分类
-					}else if(!item.picture){
-						this.slist.push(item); //没有图的是2级分类
-					}else{
-						this.tlist.push(item); //3级分类
+				let list = [];
+				
+				uni.request({
+				
+					url: `http://gulimall.com:88/api/product/category/list/tree`,
+				
+					method: 'GET',
+			
+					success: (res) => {
+						console.log(res);
+						this.$api.msg("获取分类成功:" + res.errMsg);
+						if (res.data.code == 0) {
+							this.categoryList = res.data.data;
+							
+							var obj = this.categoryList[0];
+							//渲染 第一个一级分类下的子类
+							obj.children.forEach(item=>{
+								this.slist.push(item);
+								if(item.children.length>0){
+									item.children.forEach(item2=>{
+										this.tlist.push(item2);
+									}) 
+								}
+							}) 
+						} 
+					},
+					fail: (err) => {
+						console.log("获取分类失败");
+						console.log(err)
 					}
-				}) 
+				})
+				// 
+				// let list = await this.$api.json('cateList');
+				//3级分类
+				// list.forEach(item=>{
+				// 	if(item.catLevel==1){
+				// 		this.flist.push(item); 
+				// 	}else if(item.catLevel==2){
+				// 		this.slist.push(item); 
+				// 	}else{
+				// 		this.tlist.push(item); 
+				// 	}
+				// }) 
 			},
 			//一级分类点击
-			tabtap(item){
-				if(!this.sizeCalcState){
-					this.calcSize();
-				}
-				
-				this.currentId = item.id;
-				let index = this.slist.findIndex(sitem=>sitem.pid === item.id);
-				this.tabScrollTop = this.slist[index].top;
+			tabtap(currentCategory){
+				//清空上一个 一级分类下的子类
+				this.slist = [];
+				this.tlist = [];
+				//重新初始化 渲染
+				currentCategory.children.forEach(item=>{
+					this.slist.push(item);
+					if(item.children.length>0){
+						item.children.forEach(item2=>{
+							this.tlist.push(item2);
+						}) 
+					}
+				}) 
+				// if(!this.sizeCalcState){
+				// 	this.calcSize();
+				// }
+				//修改选中样式
+				this.currentId = currentCategory.catId;
+				// let index = this.slist.findIndex(sitem=>sitem.pid === item.id);
+				// this.tabScrollTop = this.slist[index].top;
 			},
 			//右侧栏滚动
 			asideScroll(e){
@@ -66,14 +112,14 @@
 				let tabs = this.slist.filter(item=>item.top <= scrollTop).reverse();
 				if(tabs.length > 0){
           this.tabScrollTop = scrollTop;
-					this.currentId = tabs[0].pid;
+					this.currentId = tabs[0].parentCid;
 				}
 			},
 			//计算右侧栏每个tab的高度等信息
 			calcSize(){
 				let h = 0;
 				this.slist.forEach(item=>{
-					let view = uni.createSelectorQuery().select("#main-" + item.id);
+					let view = uni.createSelectorQuery().select("#main-" + item.catId);
 					view.fields({
 						size: true
 					}, data => {
